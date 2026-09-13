@@ -35,6 +35,8 @@ type ProjectFormValues = {
   client_link?: string;
   server_link?: string;
   live_link?: string;
+  video_url?: string;
+  tags?: string[];
   technologies?: TTechnology[];
 };
 
@@ -58,6 +60,7 @@ export function ProjectForm({
   const [techInput, setTechInput] = useState("");
   const [techIconInput, setTechIconInput] = useState("");
   const [featureInput, setFeatureInput] = useState("");
+  const [tagInput, setTagInput] = useState("");
   const [previewImage, setPreviewImage] = useState<string | null>(
     project?.project_image || null
   );
@@ -72,6 +75,8 @@ export function ProjectForm({
       client_link: project?.client_link || "",
       server_link: project?.server_link || "",
       live_link: project?.live_link || "",
+      video_url: project?.video_url || "",
+      tags: project?.tags || [],
       technologies: project?.technologies || [],
     },
   });
@@ -87,6 +92,8 @@ export function ProjectForm({
         client_link: project.client_link || "",
         server_link: project.server_link || "",
         live_link: project.live_link || "",
+        video_url: project.video_url || "",
+        tags: project.tags || [],
         technologies: project.technologies || [],
       });
       setPreviewImage(project.project_image || null);
@@ -100,6 +107,8 @@ export function ProjectForm({
         client_link: "",
         server_link: "",
         live_link: "",
+        video_url: "",
+        tags: [],
         technologies: [],
       });
       setPreviewImage(null);
@@ -154,6 +163,24 @@ export function ProjectForm({
     );
   };
 
+  const addTag = () => {
+    if (tagInput.trim() && !(form.getValues("tags") || []).includes(tagInput.trim())) {
+      form.setValue("tags", [
+        ...(form.getValues("tags") || []),
+        tagInput.trim(),
+      ]);
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (index: number) => {
+    const currentTags = form.getValues("tags") || [];
+    form.setValue(
+      "tags",
+      currentTags.filter((_, i) => i !== index)
+    );
+  };
+
   const handleSubmit = (values: ProjectFormValues) => {
     const formData = new FormData();
 
@@ -166,6 +193,8 @@ export function ProjectForm({
       client_link: values.client_link || "",
       server_link: values.server_link || "",
       live_link: values.live_link || "",
+      video_url: values.video_url || "",
+      tags: values.tags || [],
       technologies: values.technologies || [],
     };
     formData.append("data", JSON.stringify(data));
@@ -285,7 +314,7 @@ export function ProjectForm({
               name="live_link"
               rules={{
                 pattern: {
-                  value: /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/i,
+                  value: /^(https?:\/\/)?[\w-]+(\.[\w-]+)+([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?$/i,
                   message: "Please enter a valid URL",
                 },
               }}
@@ -303,15 +332,9 @@ export function ProjectForm({
             <FormField
               control={form.control}
               name="client_link"
-              rules={{
-                pattern: {
-                  value: /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/i,
-                  message: "Please enter a valid URL",
-                },
-              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Client Repository URL (optional)</FormLabel>
+                  <FormLabel>Frontend Code URL (optional)</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="https://github.com/username/client"
@@ -326,15 +349,9 @@ export function ProjectForm({
             <FormField
               control={form.control}
               name="server_link"
-              rules={{
-                pattern: {
-                  value: /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/i,
-                  message: "Please enter a valid URL",
-                },
-              }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Server Repository URL (optional)</FormLabel>
+                  <FormLabel>Backend Code URL (optional)</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="https://github.com/username/server"
@@ -346,12 +363,64 @@ export function ProjectForm({
               )}
             />
 
-            {/* <Input
-                  placeholder="Icon URL (optional)"
-                  value={techIconInput}
-                  className="hidden"
-                  onChange={(e) => setTechIconInput(e.target.value)}
-                /> */}
+            <FormField
+              control={form.control}
+              name="video_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Video URL (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://youtube.com/watch?v=... or video URL"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Project Tags */}
+            <div>
+              <FormLabel>Project Tags</FormLabel>
+              <p className="text-xs text-muted-foreground mb-2">
+                e.g. Own Project, Team Project, Client Project
+              </p>
+              <div className="flex gap-2 mb-2">
+                <Input
+                  placeholder="Add a tag (e.g. Client Project)"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
+                />
+                <Button type="button" variant="secondary" onClick={addTag}>
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {form.watch("tags")?.map((tag, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-1 px-2 py-1 bg-secondary rounded-full text-sm"
+                  >
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeTag(index)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div>
               <FormLabel>Technologies</FormLabel>
               <div className="flex gap-2 mb-2">
@@ -360,6 +429,12 @@ export function ProjectForm({
                   placeholder="Technology name (e.g., React)"
                   value={techInput}
                   onChange={(e) => setTechInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTechnology();
+                    }
+                  }}
                 />
                 <Button
                   type="button"
@@ -378,13 +453,6 @@ export function ProjectForm({
                     className="flex items-center justify-between gap-2 px-3 py-2 bg-secondary rounded-md"
                   >
                     <div className="flex items-center gap-2">
-                      {/* {tech.icon && (
-                        <img 
-                          src={tech.icon} 
-                          alt={tech.name}
-                          className="h-4 w-4 object-contain"
-                        />
-                      )} */}
                       <span className="text-sm">{tech.name}</span>
                     </div>
                     <button

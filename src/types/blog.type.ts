@@ -6,6 +6,8 @@ export type TBlog = {
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   publishDate?: string;
   tags: string[];
+  video_url?: string;
+  sortOrder?: number;
   authorId: string;
   createdAt: string;
   updatedAt: string;

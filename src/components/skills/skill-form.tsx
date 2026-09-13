@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ImageUpload } from "@/components/dashboard/shared/image-upload"; // Ensure this path is correct
+import { ImageUpload } from "@/components/dashboard/shared/image-upload";
 
 // Define the schema for form values
 const skillSchema = z.object({
@@ -42,10 +43,18 @@ interface SkillFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: SkillFormValues) => void;
-  initialData?: Partial<SkillFormValues & { imageUrl?: string | null }>; // For editing: allow initial image URL
+  initialData?: Partial<SkillFormValues & { imageUrl?: string | null }>;
 }
 
-const categories = ["Frontend", "Backend", "Database", "Tools", "Other"];
+const predefinedCategories = [
+  "Backend & Core",
+  "Database & ORM",
+  "Automation & Integrations",
+  "AI / LLM",
+  "Deploy & Infra",
+  "Frontend",
+  "Tools",
+];
 
 export function SkillForm({
   open,
@@ -53,32 +62,19 @@ export function SkillForm({
   onSubmit,
   initialData,
 }: SkillFormProps) {
+  const [useCustomCategory, setUseCustomCategory] = useState(false);
+
   const form = useForm<SkillFormValues>({
     resolver: zodResolver(skillSchema),
     defaultValues: {
       name: initialData?.name || "",
       category: initialData?.category || "",
-      image: null, // Image field will hold File object, or null initially.
-      // initialData.image is for File objects, initialData.imageUrl for URLs.
+      image: null,
     },
   });
 
-  // Reset form when dialog opens/closes or initialData changes (if needed for editing)
-  // useEffect(() => {
-  //   if (open) {
-  //     form.reset({
-  //       name: initialData?.name || "",
-  //       category: initialData?.category || "",
-  //       image: null, // Always reset file input, initial preview handled by ImageUpload's value prop
-  //     });
-  //   }
-  // }, [open, initialData, form]);
-
   const handleFormSubmit = (values: SkillFormValues) => {
-    console.log("Form submitted with values:", values);
     onSubmit(values);
-    // form.reset(); // Reset form fields
-    // onOpenChange(false); // Close the dialog
   };
 
   return (
@@ -87,7 +83,8 @@ export function SkillForm({
       onOpenChange={(isOpen) => {
         onOpenChange(isOpen);
         if (!isOpen) {
-          form.reset(); // Reset form when dialog is closed via 'x' or overlay click
+          form.reset();
+          setUseCustomCategory(false);
         }
       }}
     >
@@ -126,26 +123,58 @@ export function SkillForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem
-                          key={category}
-                          value={category}
-                        >
-                          {category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {!useCustomCategory ? (
+                    <>
+                      <Select
+                        onValueChange={(value) => {
+                          if (value === "__custom__") {
+                            setUseCustomCategory(true);
+                            field.onChange("");
+                          } else {
+                            field.onChange(value);
+                          }
+                        }}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {predefinedCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="__custom__">
+                            ✏️ Custom Category...
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </>
+                  ) : (
+                    <div className="flex gap-2">
+                      <FormControl>
+                        <Input
+                          placeholder="Type custom category"
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setUseCustomCategory(false);
+                          field.onChange("");
+                        }}
+                      >
+                        ← Back
+                      </Button>
+                    </div>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -153,16 +182,14 @@ export function SkillForm({
             <FormField
               control={form.control}
               name="image"
-              render={(
-                { field } // field.value will be File | null
-              ) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Skill Icon</FormLabel>
                   <FormControl>
                     <ImageUpload
-                      value={initialData?.imageUrl || null} // Pass initial image URL if editing
+                      value={initialData?.imageUrl || null}
                       onChange={(file: File) => {
-                        field.onChange(file); // Update react-hook-form state with the File object
+                        field.onChange(file);
                       }}
                     />
                   </FormControl>
@@ -176,13 +203,17 @@ export function SkillForm({
                 type="button"
                 onClick={() => {
                   onOpenChange(false);
-                  form.reset(); // Also reset if manually cancelled
+                  form.reset();
+                  setUseCustomCategory(false);
                 }}
               >
                 Cancel
               </Button>
-              <Button variant="destructive"
-        className="text-white" type="submit">
+              <Button
+                variant="destructive"
+                className="text-white"
+                type="submit"
+              >
                 {initialData?.name ? "Save Changes" : "Add Skill"}
               </Button>
             </DialogFooter>

@@ -13,6 +13,9 @@ export type TProject = {
   client_link?: string;
   server_link?: string;
   live_link?: string;
+  video_url?: string;
+  tags?: string[];
+  sortOrder?: number;
   technologies?: TTechnology[];
   authorId?: string;
   createdAt: string;

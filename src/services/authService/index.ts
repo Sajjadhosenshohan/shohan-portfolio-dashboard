@@ -34,6 +34,7 @@ export const registerUser = async (userData: FieldValues) => {
 
 export const loginUser = async (userData: FieldValues) => {
   try {
+    console.log("LOGIN DATA =>", userData, process.env.NEXT_PUBLIC_BASE_API);
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_API}/auth/login`, {
       method: "POST",
       headers: {
@@ -44,6 +45,7 @@ export const loginUser = async (userData: FieldValues) => {
     });
 
     const result = await res.json();
+    console.log(result);
     if (result.success) {
       (await cookies()).set("accessToken", result.data.accessToken);
     }

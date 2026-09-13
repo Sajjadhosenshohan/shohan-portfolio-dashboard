@@ -4,6 +4,7 @@ export type TResume = {
     title: string;
     pdfUrl:string;
     publicId? : string;
+    sortOrder?: number;
     createdAt:string;
     updatedAt:string;
     isActive: boolean

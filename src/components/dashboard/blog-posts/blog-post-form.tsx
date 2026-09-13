@@ -39,6 +39,7 @@ interface BlogPostFormValues {
   blog_image: string | File;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   tags: string[];
+  video_url?: string;
 }
 
 interface BlogPostFormProps {
@@ -64,6 +65,7 @@ export function BlogPostForm({
     blog_image: post?.blog_image || "",
     status: post?.status || "DRAFT",
     tags: post?.tags || [],
+    video_url: post?.video_url || "",
   }), [post]);
 
   const form = useForm<BlogPostFormValues>({
@@ -261,6 +263,24 @@ export function BlogPostForm({
                 />
               </div>
             </div>
+
+            <FormField
+              control={form.control}
+              name="video_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Video URL (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="https://youtube.com/watch?v=... or video URL"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter className="pt-4">
               <Button
                 variant="outline"
